@@ -32,6 +32,9 @@
   --t:.3s var(--ease);
   --header-h:68px;
   --container:1200px;
+
+  /* Default concierge background — overridden by Settings via --main-bg-image */
+  --default-main-bg: url("https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80");
 }
 
 /* ============================================================
@@ -149,22 +152,25 @@ button{cursor:pointer}
 .mobile-tabs{display:none}
 
 /* ============================================================
-   6. Page 1 — Concierge
+   6. Page 1 — Concierge (background driven by --main-bg-image)
    ============================================================ */
 .concierge-page{
   min-height:100vh;min-height:100svh;
   padding-top:calc(var(--header-h) + 40px);
   padding-bottom:60px;
   display:flex;flex-direction:column;justify-content:center;
-  background:var(--charcoal);
+  background-color:var(--charcoal);
   color:var(--ivory);position:relative;overflow:hidden;
 }
 .concierge-page::before{
   content:"";position:absolute;inset:0;
-  background:var(--charcoal)
-    url("https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80")
-    no-repeat center/cover;
-  opacity:.28;z-index:0;
+  background-color:var(--charcoal);
+  background-image:var(--main-bg-image,var(--default-main-bg));
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  opacity:.28;
+  z-index:0;
 }
 .concierge-inner{
   position:relative;z-index:1;
@@ -219,7 +225,7 @@ button{cursor:pointer}
 }
 
 /* ============================================================
-   7. Page 2 — Rooms + Map (map at bottom, hidden by default)
+   7. Page 2 — Rooms
    ============================================================ */
 .rooms-section{padding-block:40px 20px}
 .promo-banner{
@@ -291,7 +297,7 @@ button{cursor:pointer}
   box-shadow:var(--sh-sm);font-family:var(--sans);font-size:.9rem;
 }
 
-/* Map section — bottom of page 2, hidden by default */
+/* Map section (bottom, hidden until requested) */
 .map-section{
   padding-block:40px 60px;
   max-width:var(--container);margin-inline:auto;padding-inline:24px;
@@ -299,8 +305,7 @@ button{cursor:pointer}
 .map-card{
   background:var(--white);
   border-radius:var(--radius);padding:28px;
-  box-shadow:var(--sh);
-  text-align:center;
+  box-shadow:var(--sh);text-align:center;
 }
 .map-card h2{font-size:1.3rem;margin-bottom:4px}
 .map-card .address{
@@ -316,9 +321,8 @@ button{cursor:pointer}
 .map-panel[hidden]{display:none}
 .map-container{
   width:100%;height:380px;
-  border-radius:var(--radius);
-  overflow:hidden;background:#e2e8f0;
-  box-shadow:var(--sh-sm);
+  border-radius:var(--radius);overflow:hidden;
+  background:#e2e8f0;box-shadow:var(--sh-sm);
   border:1px solid var(--line);
 }
 #map{width:100%;height:100%}
@@ -547,8 +551,7 @@ button{cursor:pointer}
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   padding:10px 12px;background:#f8fafc;border:1px solid var(--line);
   border-radius:var(--radius-sm);cursor:pointer;user-select:none;
-  transition:border-color var(--t),background var(--t);
-  margin:0;
+  transition:border-color var(--t),background var(--t);margin:0;
 }
 .toggle-row:hover{border-color:var(--gold);background:#fef9e7}
 .toggle-row .toggle-label{
@@ -594,6 +597,22 @@ button{cursor:pointer}
   font-family:var(--serif);font-size:1.4rem;font-weight:700;color:var(--muted);
 }
 .agent-photo-preview .thumb img{width:100%;height:100%;object-fit:cover}
+
+/* Background image preview */
+.bg-preview-row{
+  display:flex;gap:12px;align-items:center;
+}
+.bg-preview{
+  position:relative;flex-shrink:0;
+  width:128px;height:72px;border-radius:var(--radius-sm);
+  overflow:hidden;background:var(--charcoal);
+  border:1px solid var(--line);
+}
+.bg-preview img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;
+}
+.bg-preview img[hidden]{display:none}
 
 .mg-row{
   display:flex;flex-direction:column;gap:10px;
@@ -725,6 +744,7 @@ button{cursor:pointer}
   .stay-tabs{grid-template-columns:1fr}
   .map-card{padding:20px}
   .map-card .map-actions .btn{min-width:120px;padding:10px 14px;font-size:.7rem}
+  .bg-preview{width:100px;height:60px}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -796,7 +816,6 @@ button{cursor:pointer}
       <div class="rooms-grid" id="rooms-grid"></div>
     </div>
 
-    <!-- Map — BOTTOM of page, hidden by default -->
     <div class="map-section" id="map-section" hidden>
       <div class="map-card">
         <h2 id="map-title">The Grand Luxe</h2>
@@ -1001,23 +1020,14 @@ button{cursor:pointer}
 
         <div class="settings-group">
           <h4>Hotel</h4>
-          <div class="settings-field">
-            <label for="set-name">Hotel name</label>
-            <input type="text" id="set-name" placeholder="The Grand Luxe">
-          </div>
+          <div class="settings-field"><label for="set-name">Hotel name</label><input type="text" id="set-name" placeholder="The Grand Luxe"></div>
           <div class="settings-field">
             <label for="set-wa">Concierge WhatsApp (receives alerts)</label>
             <input type="text" id="set-wa" placeholder="256752123456" inputmode="numeric">
             <div class="warning" id="wa-warning">⚠ Update to your real WhatsApp number — booking alerts go here.</div>
           </div>
-          <div class="settings-field">
-            <label for="set-code">Merchant code (USSD)</label>
-            <input type="text" id="set-code" placeholder="123456" inputmode="numeric">
-          </div>
-          <div class="settings-field">
-            <label for="set-tax">Tax rate (%)</label>
-            <input type="number" id="set-tax" min="0" max="50" step="0.1" placeholder="18">
-          </div>
+          <div class="settings-field"><label for="set-code">Merchant code (USSD)</label><input type="text" id="set-code" placeholder="123456" inputmode="numeric"></div>
+          <div class="settings-field"><label for="set-tax">Tax rate (%)</label><input type="number" id="set-tax" min="0" max="50" step="0.1" placeholder="18"></div>
         </div>
 
         <div class="settings-group">
@@ -1037,6 +1047,29 @@ button{cursor:pointer}
           <div class="settings-field"><label for="set-agent-phone">Phone</label><input type="text" id="set-agent-phone" placeholder="123-456-7890"></div>
           <div class="settings-field"><label for="set-agent-email">Email</label><input type="email" id="set-agent-email" placeholder="concierge@thegrandluxe.com"></div>
           <div class="settings-field"><label for="set-agent-bio">Bio</label><textarea id="set-agent-bio" placeholder="Let me help you find the best suite."></textarea></div>
+        </div>
+
+        <!-- NEW: Main page background -->
+        <div class="settings-group">
+          <h4>Main page background</h4>
+          <div class="settings-field">
+            <label for="set-bg-url">Image URL</label>
+            <input type="url" id="set-bg-url" placeholder="https://… (leave empty for default)">
+            <p class="info-line" style="margin-top:4px">Paste an https:// image URL, or upload a file below. Applies to the concierge landing page.</p>
+          </div>
+          <div class="settings-field">
+            <label>Preview &amp; upload</label>
+            <div class="bg-preview-row">
+              <div class="bg-preview">
+                <img id="bg-preview-img" alt="Current background preview"
+                     src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80">
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                <button type="button" class="btn btn--soft btn--sm" id="set-bg-upload-btn">📸 Upload image</button>
+                <button type="button" class="btn btn--danger btn--sm" id="set-bg-reset">↺ Reset to default</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="settings-group">
@@ -1092,10 +1125,7 @@ button{cursor:pointer}
 
         <div class="settings-group">
           <h4>Location</h4>
-          <div class="settings-field">
-            <label for="set-address">Address</label>
-            <input type="text" id="set-address" placeholder="123 Luxury Lane, Downtown">
-          </div>
+          <div class="settings-field"><label for="set-address">Address</label><input type="text" id="set-address" placeholder="123 Luxury Lane, Downtown"></div>
           <div class="settings-field">
             <div class="coord-row">
               <label class="sr-only" for="set-lat">Latitude</label>
@@ -1185,18 +1215,9 @@ button{cursor:pointer}
       <div class="tab-panel" data-panel="promos" role="tabpanel">
         <div id="console-promos"></div>
         <div class="mg-row" style="margin-top:16px">
-          <div class="settings-field" style="margin:0 0 8px">
-            <label for="new-promo-title">Title</label>
-            <input id="new-promo-title" placeholder="Weekend special">
-          </div>
-          <div class="settings-field" style="margin:0 0 8px">
-            <label for="new-promo-msg">Message</label>
-            <textarea id="new-promo-msg" placeholder="20% off suites this weekend!" style="min-height:44px"></textarea>
-          </div>
-          <div class="settings-field" style="margin:0 0 8px">
-            <label for="new-promo-discount">Discount (%)</label>
-            <input id="new-promo-discount" type="number" min="0" max="50" step="1" placeholder="0">
-          </div>
+          <div class="settings-field" style="margin:0 0 8px"><label for="new-promo-title">Title</label><input id="new-promo-title" placeholder="Weekend special"></div>
+          <div class="settings-field" style="margin:0 0 8px"><label for="new-promo-msg">Message</label><textarea id="new-promo-msg" placeholder="20% off suites this weekend!" style="min-height:44px"></textarea></div>
+          <div class="settings-field" style="margin:0 0 8px"><label for="new-promo-discount">Discount (%)</label><input id="new-promo-discount" type="number" min="0" max="50" step="1" placeholder="0"></div>
           <div class="mg-bottom">
             <div class="mg-hint" id="promo-error" role="alert"></div>
             <div class="mg-actions"><button class="btn btn--success btn--sm" id="add-promo" type="button">Add promo</button></div>
@@ -1213,83 +1234,58 @@ button{cursor:pointer}
 
 <input type="file" id="photo-input" accept="image/*" multiple hidden>
 <input type="file" id="agent-photo-input" accept="image/*" hidden>
+<input type="file" id="bg-image-input" accept="image/*" hidden>
 <div class="toast-wrap" id="toast-wrap" role="status" aria-live="polite"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-/* ============================================================
-   BULLETPROOF SEAL — global error suppression
-   ============================================================ */
 (function () {
   "use strict";
 
+  /* ============================================================
+     BULLETPROOF SEAL — global error suppression
+     ============================================================ */
   window.addEventListener("error", function (e) {
     try { console.warn("[suppressed error]", e && (e.message || e.error)); } catch (_) {}
     if (e && typeof e.preventDefault === "function") e.preventDefault();
   }, true);
-
   window.addEventListener("unhandledrejection", function (e) {
     try { console.warn("[suppressed promise]", e && e.reason); } catch (_) {}
     if (e && typeof e.preventDefault === "function") e.preventDefault();
   });
 
-  /* Safe function wrapper — catches and logs, never throws */
-  function safe(fn, label) {
-    return function () {
-      try { return fn.apply(this, arguments); }
-      catch (err) { try { console.warn("[safe:" + (label || "?") + "]", err); } catch (_) {} }
-    };
-  }
-
-  /* Safe DOM access */
-  function $(id) {
-    try { return document.getElementById(id); }
-    catch (_) { return null; }
-  }
-  function els(sel, root) {
-    try { return Array.from((root || document).querySelectorAll(sel)); }
-    catch (_) { return []; }
-  }
+  function $(id) { try { return document.getElementById(id); } catch (_) { return null; } }
+  function els(sel, root) { try { return Array.from((root || document).querySelectorAll(sel)); } catch (_) { return []; } }
   function on(el, evt, fn) {
     if (!el) return;
-    try { el.addEventListener(evt, safe(fn, evt)); }
+    try { el.addEventListener(evt, function (e) { try { fn.call(el, e); } catch (err) { try { console.warn("[on:" + evt + "]", err); } catch (_) {} } }); }
     catch (_) {}
   }
-
-  /* Safe storage */
   function safeGet(key, fallback) {
-    try {
-      var raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      var parsed = JSON.parse(raw);
-      return parsed === null || parsed === undefined ? fallback : parsed;
-    } catch (_) { return fallback; }
+    try { var raw = localStorage.getItem(key); if (!raw) return fallback; var p = JSON.parse(raw); return p == null ? fallback : p; }
+    catch (_) { return fallback; }
   }
-  function safeSet(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-    catch (_) { return false; }
-  }
+  function safeSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (_) { return false; } }
 
-  /* ============================================================
-     Constants
-     ============================================================ */
   var MAX_PHOTOS = 8;
   var PHOTO_MAX_DIM = 720;
   var PHOTO_QUALITY = 0.7;
+  var BG_MAX_DIM = 1600;
+  var BG_QUALITY = 0.8;
+  var DEFAULT_BG_URL = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80";
+
   var K = {
-    settings: "gl_settings_v6",
-    rooms: "gl_rooms_v6",
-    guests: "gl_guests_v6",
-    bookings: "gl_bookings_v6",
-    pin: "gl_pin_v6"
+    settings: "gl_settings_v7",
+    rooms: "gl_rooms_v7",
+    guests: "gl_guests_v7",
+    bookings: "gl_bookings_v7",
+    pin: "gl_pin_v7"
   };
 
   /* ============================================================
      Modal manager
      ============================================================ */
-  var openModals = [];
-  var lastFocus = null;
-
+  var openModals = [], lastFocus = null;
   function openModal(el) {
     if (!el || openModals.indexOf(el) > -1) return;
     lastFocus = document.activeElement;
@@ -1310,10 +1306,7 @@ button{cursor:pointer}
     }
   }
   on(document, "keydown", function (e) {
-    if (e.key === "Escape" && openModals.length) {
-      e.preventDefault();
-      closeModal(openModals[openModals.length - 1]);
-    }
+    if (e.key === "Escape" && openModals.length) { e.preventDefault(); closeModal(openModals[openModals.length - 1]); }
   });
   on(document, "click", function (e) {
     var btn = e.target.closest("[data-close]");
@@ -1325,14 +1318,11 @@ button{cursor:pointer}
   /* ============================================================
      Toast
      ============================================================ */
-  var toastQueue = [];
-  var toastActive = false;
   function toast(msg) {
     var wrap = $("toast-wrap");
     if (!wrap) return;
     var el = document.createElement("div");
-    el.className = "toast";
-    el.textContent = String(msg);
+    el.className = "toast"; el.textContent = String(msg);
     wrap.appendChild(el);
     setTimeout(function () { try { el.remove(); } catch (_) {} }, 2800);
   }
@@ -1340,9 +1330,7 @@ button{cursor:pointer}
     try {
       var Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
-      var ctx = new Ctx();
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
+      var ctx = new Ctx(), osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.frequency.value = 880;
       gain.gain.setValueAtTime(0.18, ctx.currentTime);
@@ -1354,32 +1342,20 @@ button{cursor:pointer}
   /* ============================================================
      Helpers
      ============================================================ */
-  function escapeHTML(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-  function escapeAttr(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
+  function escapeHTML(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function escapeAttr(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function openWhatsApp(phone, text) {
     var clean = String(phone || "").replace(/\D/g, "");
     if (!clean) { toast("No number available"); return false; }
-    try {
-      window.open("https://wa.me/" + clean + "?text=" + encodeURIComponent(text), "_blank", "noopener");
-      return true;
-    } catch (_) { toast("Could not open WhatsApp"); return false; }
+    try { window.open("https://wa.me/" + clean + "?text=" + encodeURIComponent(text), "_blank", "noopener"); return true; }
+    catch (_) { toast("Could not open WhatsApp"); return false; }
   }
   function maskPhone(raw) {
     var d = String(raw || "").replace(/\D/g, "");
     if (d.length < 4) return raw;
     return d.slice(0, 3) + " •••• " + d.slice(-3);
   }
-  function validPhone(raw) {
-    var d = String(raw || "").replace(/[^\d]/g, "");
-    return d.length >= 9 && d.length <= 15;
-  }
+  function validPhone(raw) { var d = String(raw || "").replace(/[^\d]/g, ""); return d.length >= 9 && d.length <= 15; }
   function initialsOf(name) {
     return (String(name || "GL").trim() || "GL").split(/\s+/).filter(Boolean).slice(0, 2)
       .map(function (w) { return w[0].toUpperCase(); }).join("") || "GL";
@@ -1388,20 +1364,13 @@ button{cursor:pointer}
   /* ============================================================
      Dates
      ============================================================ */
-  function dateOnly(d) {
-    return d.getFullYear() + "-" +
-      String(d.getMonth() + 1).padStart(2, "0") + "-" +
-      String(d.getDate()).padStart(2, "0");
-  }
+  function dateOnly(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   function parseDate(s) {
     var p = String(s || "").split("-").map(Number);
     if (p.length !== 3 || p.some(function (n) { return !isFinite(n); })) return new Date();
     return new Date(p[0], p[1] - 1, p[2]);
   }
-  function nightsBetween(a, b) {
-    try { return Math.max(0, Math.round((parseDate(b) - parseDate(a)) / 86400000)); }
-    catch (_) { return 0; }
-  }
+  function nightsBetween(a, b) { try { return Math.max(0, Math.round((parseDate(b) - parseDate(a)) / 86400000)); } catch (_) { return 0; } }
   function humanDate(s) {
     if (!s) return "—";
     try { return parseDate(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); }
@@ -1416,15 +1385,8 @@ button{cursor:pointer}
   /* ============================================================
      Currency
      ============================================================ */
-  var FALLBACK_RATES = {
-    USD: 1, EUR: .92, GBP: .79, CAD: 1.37, AUD: 1.51, NZD: 1.63,
-    UGX: 3800, KES: 129, TZS: 2600, NGN: 1550, GHS: 15, ZAR: 18.3, INR: 83, AED: 3.67
-  };
-  var COUNTRY_TO_CURRENCY = {
-    US: "USD", GB: "GBP", CA: "CAD", AU: "AUD", NZ: "NZD", UG: "UGX", KE: "KES", TZ: "TZS",
-    NG: "NGN", GH: "GHS", ZA: "ZAR", IN: "INR", AE: "AED",
-    IE: "EUR", FR: "EUR", DE: "EUR", ES: "EUR", IT: "EUR", PT: "EUR"
-  };
+  var FALLBACK_RATES = { USD: 1, EUR: .92, GBP: .79, CAD: 1.37, AUD: 1.51, NZD: 1.63, UGX: 3800, KES: 129, TZS: 2600, NGN: 1550, GHS: 15, ZAR: 18.3, INR: 83, AED: 3.67 };
+  var COUNTRY_TO_CURRENCY = { US: "USD", GB: "GBP", CA: "CAD", AU: "AUD", NZ: "NZD", UG: "UGX", KE: "KES", TZ: "TZS", NG: "NGN", GH: "GHS", ZA: "ZAR", IN: "INR", AE: "AED", IE: "EUR", FR: "EUR", DE: "EUR", ES: "EUR", IT: "EUR", PT: "EUR" };
   var CURRENCY_OPTIONS = ["USD","UGX","KES","TZS","NGN","GHS","ZAR","EUR","GBP","INR","AED"];
 
   var activeCurrency = "USD";
@@ -1433,37 +1395,23 @@ button{cursor:pointer}
 
   function money(usd) {
     var amount = (Number(usd) || 0) * (rates[activeCurrency] || 1);
-    try {
-      return new Intl.NumberFormat(activeLocale, { style: "currency", currency: activeCurrency }).format(amount);
-    } catch (_) {
-      return activeCurrency + " " + Math.round(amount).toLocaleString();
-    }
+    try { return new Intl.NumberFormat(activeLocale, { style: "currency", currency: activeCurrency }).format(amount); }
+    catch (_) { return activeCurrency + " " + Math.round(amount).toLocaleString(); }
   }
   async function fetchJSON(url, ms) {
     var ctrl = new AbortController();
     var t = setTimeout(function () { try { ctrl.abort(); } catch (_) {} }, ms);
-    try {
-      var res = await fetch(url, { signal: ctrl.signal });
-      if (!res.ok) throw new Error();
-      return await res.json();
-    } finally { clearTimeout(t); }
+    try { var res = await fetch(url, { signal: ctrl.signal }); if (!res.ok) throw new Error(); return await res.json(); }
+    finally { clearTimeout(t); }
   }
   function buildCurrencySelect() {
     var sel = $("currency-select");
     if (!sel) return;
-    CURRENCY_OPTIONS.forEach(function (c) {
-      var o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o);
-    });
-    on(sel, "change", function () {
-      activeCurrency = sel.value;
-      settings.forceCurrency = sel.value;
-      saveSettings();
-      renderAll();
-    });
+    CURRENCY_OPTIONS.forEach(function (c) { var o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o); });
+    on(sel, "change", function () { activeCurrency = sel.value; settings.forceCurrency = sel.value; saveSettings(); renderAll(); });
   }
   function updateCurrencySelect() {
-    var sel = $("currency-select");
-    if (!sel) return;
+    var sel = $("currency-select"); if (!sel) return;
     if (!Array.from(sel.options).some(function (o) { return o.value === activeCurrency; })) {
       var o = document.createElement("option"); o.value = activeCurrency; o.textContent = activeCurrency; sel.appendChild(o);
     }
@@ -1472,9 +1420,7 @@ button{cursor:pointer}
   async function detectCurrency() {
     try {
       var geo = await fetchJSON("https://get.geojs.io/v1/ip/geo.json", 4000);
-      if (geo && geo.country_code && COUNTRY_TO_CURRENCY[geo.country_code]) {
-        activeCurrency = COUNTRY_TO_CURRENCY[geo.country_code];
-      }
+      if (geo && geo.country_code && COUNTRY_TO_CURRENCY[geo.country_code]) activeCurrency = COUNTRY_TO_CURRENCY[geo.country_code];
     } catch (_) {}
     try {
       var data = await fetchJSON("https://open.er-api.com/v6/latest/USD", 6000);
@@ -1489,7 +1435,7 @@ button{cursor:pointer}
      PIN
      ============================================================ */
   async function hashPin(pin) {
-    var salted = "gl_v6_" + pin;
+    var salted = "gl_v7_" + pin;
     if (window.crypto && window.crypto.subtle) {
       try {
         var buf = new TextEncoder().encode(salted);
@@ -1498,10 +1444,7 @@ button{cursor:pointer}
       } catch (_) {}
     }
     var h1 = 5381, h2 = 0;
-    for (var i = 0; i < salted.length; i++) {
-      h1 = ((h1 << 5) + h1 + salted.charCodeAt(i)) | 0;
-      h2 = ((h2 << 7) + h2 + salted.charCodeAt(i)) | 0;
-    }
+    for (var i = 0; i < salted.length; i++) { h1 = ((h1 << 5) + h1 + salted.charCodeAt(i)) | 0; h2 = ((h2 << 7) + h2 + salted.charCodeAt(i)) | 0; }
     return "fb_" + Math.abs(h1).toString(16) + Math.abs(h2).toString(16);
   }
   var UNLOCK_MS = 15 * 60 * 1000;
@@ -1512,7 +1455,7 @@ button{cursor:pointer}
   function touchConsole() { if (consoleUnlocked) unlockExpiry = Date.now() + UNLOCK_MS; }
 
   /* ============================================================
-     State + validation seal
+     State
      ============================================================ */
   var DEFAULT_SETTINGS = {
     businessName: "The Grand Luxe",
@@ -1530,9 +1473,9 @@ button{cursor:pointer}
     agentPhone: "123-456-7890",
     agentEmail: "concierge@thegrandluxe.com",
     agentPhoto: "",
+    backgroundImage: "",
     wifiAvailable: true,
     breakfastAvailable: true,
-    // Interface controls
     showConciergePage: true,
     showMap: true,
     showPromoBanner: true,
@@ -1541,33 +1484,12 @@ button{cursor:pointer}
   };
 
   var DEFAULT_ROOMS = [
-    { id: 1, name: "Deluxe Room", type: "Deluxe Room", emoji: "🛏",
-      desc: "Plush king bed, marble bathroom and skyline views.",
-      address: "City Wing · 3rd Floor", lat: 51.5074, lng: -0.1278,
-      dailyRate: 299, weeklyRate: 1890, monthlyRate: 6900,
-      maxGuests: 2, beds: 1, baths: 1,
-      photos: ["https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80"] },
-    { id: 2, name: "Executive Suite", type: "Suite", emoji: "🏨",
-      desc: "Separate living area, private bedroom and club-lounge access.",
-      address: "City Wing · 7th Floor", lat: 51.5080, lng: -0.1265,
-      dailyRate: 499, weeklyRate: 3150, monthlyRate: 11500,
-      maxGuests: 3, beds: 1, baths: 2,
-      photos: ["https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80"] },
-    { id: 3, name: "Presidential Suite", type: "Presidential Suite", emoji: "👑",
-      desc: "Panoramic views, private lounge, dining room for six.",
-      address: "Sky Wing · Penthouse", lat: 51.5085, lng: -0.1285,
-      dailyRate: 999, weeklyRate: 6300, monthlyRate: 23000,
-      maxGuests: 4, beds: 2, baths: 3,
-      photos: ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80"] },
-    { id: 4, name: "Family Room", type: "Family Room", emoji: "🧸",
-      desc: "Flexible bedding, extra space and a bright sitting corner.",
-      address: "Garden Wing · 2nd Floor", lat: 51.5068, lng: -0.1290,
-      dailyRate: 399, weeklyRate: 2520, monthlyRate: 9200,
-      maxGuests: 4, beds: 2, baths: 2,
-      photos: ["https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=80"] }
+    { id: 1, name: "Deluxe Room", type: "Deluxe Room", emoji: "🛏", desc: "Plush king bed, marble bathroom and skyline views.", address: "City Wing · 3rd Floor", lat: 51.5074, lng: -0.1278, dailyRate: 299, weeklyRate: 1890, monthlyRate: 6900, maxGuests: 2, beds: 1, baths: 1, photos: ["https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80"] },
+    { id: 2, name: "Executive Suite", type: "Suite", emoji: "🏨", desc: "Separate living area, private bedroom and club-lounge access.", address: "City Wing · 7th Floor", lat: 51.5080, lng: -0.1265, dailyRate: 499, weeklyRate: 3150, monthlyRate: 11500, maxGuests: 3, beds: 1, baths: 2, photos: ["https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80"] },
+    { id: 3, name: "Presidential Suite", type: "Presidential Suite", emoji: "👑", desc: "Panoramic views, private lounge, dining room for six.", address: "Sky Wing · Penthouse", lat: 51.5085, lng: -0.1285, dailyRate: 999, weeklyRate: 6300, monthlyRate: 23000, maxGuests: 4, beds: 2, baths: 3, photos: ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80"] },
+    { id: 4, name: "Family Room", type: "Family Room", emoji: "🧸", desc: "Flexible bedding, extra space and a bright sitting corner.", address: "Garden Wing · 2nd Floor", lat: 51.5068, lng: -0.1290, dailyRate: 399, weeklyRate: 2520, monthlyRate: 9200, maxGuests: 4, beds: 2, baths: 2, photos: ["https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=80"] }
   ];
 
-  /* Atomic settings validation — seals against bad input */
   function validateSettings(raw) {
     var s = Object.assign({}, DEFAULT_SETTINGS, raw || {});
     s.businessName = String(s.businessName || "").trim() || DEFAULT_SETTINGS.businessName;
@@ -1584,7 +1506,18 @@ button{cursor:pointer}
     s.agentBio = String(s.agentBio || "").trim() || DEFAULT_SETTINGS.agentBio;
     s.agentPhone = String(s.agentPhone || "").trim();
     s.agentEmail = String(s.agentEmail || "").trim();
-    s.agentPhoto = typeof s.agentPhoto === "string" && s.agentPhoto.startsWith("data:image") ? s.agentPhoto : "";
+    s.agentPhoto = (typeof s.agentPhoto === "string" && s.agentPhoto.indexOf("data:image") === 0) ? s.agentPhoto : "";
+
+    // Background image — accepts data URL or http(s) URL
+    var bg = String(s.backgroundImage || "").trim();
+    if (bg && bg.indexOf("data:image/") === 0) {
+      s.backgroundImage = bg;
+    } else if (/^https?:\/\//i.test(bg)) {
+      s.backgroundImage = bg;
+    } else {
+      s.backgroundImage = "";
+    }
+
     s.wifiAvailable = !!s.wifiAvailable;
     s.breakfastAvailable = !!s.breakfastAvailable;
     s.showConciergePage = s.showConciergePage !== false;
@@ -1603,17 +1536,14 @@ button{cursor:pointer}
       emoji: String(r.emoji || "🏨").slice(0, 4),
       desc: String(r.desc || "").trim(),
       address: String(r.address || "").trim(),
-      lat: Number(r.lat) || 0,
-      lng: Number(r.lng) || 0,
+      lat: Number(r.lat) || 0, lng: Number(r.lng) || 0,
       dailyRate: Math.max(0, Number(r.dailyRate) || 0),
       weeklyRate: Math.max(0, Number(r.weeklyRate) || 0),
       monthlyRate: Math.max(0, Number(r.monthlyRate) || 0),
       maxGuests: Math.max(1, Number(r.maxGuests) || 1),
       beds: Math.max(0, Number(r.beds) || 0),
       baths: Math.max(0, Number(r.baths) || 0),
-      photos: Array.isArray(r.photos)
-        ? r.photos.filter(function (s) { return typeof s === "string" && s.startsWith("data:image"); }).slice(0, MAX_PHOTOS)
-        : []
+      photos: Array.isArray(r.photos) ? r.photos.filter(function (s) { return typeof s === "string" && s.indexOf("data:image") === 0; }).slice(0, MAX_PHOTOS) : []
     };
   }
 
@@ -1629,13 +1559,57 @@ button{cursor:pointer}
   function nextRoomId() { return rooms.reduce(function (m, r) { return Math.max(m, r.id); }, 0) + 1; }
 
   /* ============================================================
-     Two-page navigation with sealed visibility
+     Background image
+     ============================================================ */
+  function applyMainBackground() {
+    try {
+      var url = settings.backgroundImage;
+      var root = document.documentElement;
+      if (url && (url.indexOf("data:image/") === 0 || /^https?:\/\//i.test(url))) {
+        var safe = url.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\n\r]/g, "");
+        root.style.setProperty("--main-bg-image", 'url("' + safe + '")');
+      } else {
+        root.style.removeProperty("--main-bg-image");
+      }
+    } catch (err) { try { console.warn("[bg apply]", err); } catch (_) {} }
+  }
+
+  function updateBgPreview() {
+    var img = $("bg-preview-img");
+    if (!img) return;
+    var url = settings.backgroundImage;
+    img.src = (url && (url.indexOf("data:image/") === 0 || /^https?:\/\//i.test(url))) ? url : DEFAULT_BG_URL;
+  }
+
+  function compressBackground(file) {
+    return new Promise(function (resolve, reject) {
+      var url;
+      try { url = URL.createObjectURL(file); } catch (_) { reject(new Error("bad file")); return; }
+      var img = new Image();
+      img.onload = function () {
+        try { URL.revokeObjectURL(url); } catch (_) {}
+        try {
+          var w = img.width, h = img.height;
+          var scale = Math.min(1, BG_MAX_DIM / Math.max(w, h));
+          w = Math.max(1, Math.round(w * scale));
+          h = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", BG_QUALITY));
+        } catch (err) { reject(err); }
+      };
+      img.onerror = function () { try { URL.revokeObjectURL(url); } catch (_) {}; reject(new Error("bad image")); };
+      img.src = url;
+    });
+  }
+
+  /* ============================================================
+     Page navigation
      ============================================================ */
   function showPage(name) {
     if (name === "concierge" && !settings.showConciergePage) name = "rooms";
-    els("[data-page]").forEach(function (el) {
-      el.classList.toggle("is-active", el.dataset.page === name);
-    });
+    els("[data-page]").forEach(function (el) { el.classList.toggle("is-active", el.dataset.page === name); });
     els("[data-nav]").forEach(function (el) {
       var active = el.dataset.nav === name;
       el.classList.toggle("is-active", active);
@@ -1643,9 +1617,6 @@ button{cursor:pointer}
     });
     try { history.replaceState(null, "", "#" + name); } catch (_) {}
     window.scrollTo(0, 0);
-    if (name === "rooms") {
-      // Nothing to do — map is hidden until user asks for it.
-    }
   }
   on(document, "click", function (e) {
     var nav = e.target.closest("[data-nav]");
@@ -1654,26 +1625,15 @@ button{cursor:pointer}
     showPage(nav.dataset.nav);
   });
 
-  /* Tabs visibility controlled by settings */
   function syncTabVisibility() {
     var conciergeTab = $("tab-concierge");
-    var mobileConciergeTab = els('.mobile-tabs [data-nav="concierge"]')[0];
+    var mobileConcierge = els('.mobile-tabs [data-nav="concierge"]')[0];
     if (conciergeTab) conciergeTab.hidden = !settings.showConciergePage;
-    if (mobileConciergeTab) mobileConciergeTab.hidden = !settings.showConciergePage;
-    if (!settings.showConciergePage) {
-      var conciergePage = $("page-concierge");
-      if (conciergePage) {
-        conciergePage.setAttribute("data-page-disabled", "1");
-        conciergePage.style.display = "none";
-      }
-    } else {
-      var cp = $("page-concierge");
-      if (cp) cp.removeAttribute("data-page-disabled");
-    }
+    if (mobileConcierge) mobileConcierge.hidden = !settings.showConciergePage;
   }
 
   /* ============================================================
-     Render concierge page
+     Concierge
      ============================================================ */
   function renderConcierge() {
     var n = $("concierge-name"); if (n) n.textContent = settings.agentName || "Concierge";
@@ -1681,25 +1641,14 @@ button{cursor:pointer}
     var b = $("concierge-bio"); if (b) b.textContent = settings.agentBio || "";
     var ph = $("concierge-phone"); if (ph) ph.textContent = settings.agentPhone || "—";
     var em = $("concierge-email"); if (em) em.textContent = settings.agentEmail || "—";
-    var pl = $("concierge-phone-link");
-    if (pl) pl.href = "tel:" + String(settings.agentPhone || "").replace(/[^\d+]/g, "");
-    var elink = $("concierge-email-link");
-    if (elink) elink.href = "mailto:" + (settings.agentEmail || "");
+    var pl = $("concierge-phone-link"); if (pl) pl.href = "tel:" + String(settings.agentPhone || "").replace(/[^\d+]/g, "");
+    var elink = $("concierge-email-link"); if (elink) elink.href = "mailto:" + (settings.agentEmail || "");
 
-    var ini = $("concierge-initials");
-    if (ini) ini.textContent = initialsOf(settings.agentName);
-
+    var ini = $("concierge-initials"); if (ini) ini.textContent = initialsOf(settings.agentName);
     var img = $("concierge-img");
     if (img) {
-      if (settings.agentPhoto) {
-        img.src = settings.agentPhoto;
-        img.hidden = false;
-        if (ini) ini.style.display = "none";
-      } else {
-        img.hidden = true;
-        img.removeAttribute("src");
-        if (ini) ini.style.display = "";
-      }
+      if (settings.agentPhoto) { img.src = settings.agentPhoto; img.hidden = false; if (ini) ini.style.display = "none"; }
+      else { img.hidden = true; img.removeAttribute("src"); if (ini) ini.style.display = ""; }
     }
   }
   on($("concierge-whatsapp"), "click", function () {
@@ -1709,7 +1658,7 @@ button{cursor:pointer}
   });
 
   /* ============================================================
-     Promo banner + rate calc
+     Promo + rates
      ============================================================ */
   function getActiveDiscount() {
     var active = (settings.promos || []).filter(function (p) { return p.active && Number(p.discount) > 0; });
@@ -1722,16 +1671,11 @@ button{cursor:pointer}
     var active = (settings.promos || []).filter(function (p) { return p.active; });
     if (!active.length) { wrap.hidden = true; return; }
     wrap.hidden = false;
-    inner.innerHTML = "📣 " + escapeHTML(active[0].title) +
-      (active[0].discount > 0 ? " · " + active[0].discount + "% off" : "");
+    inner.innerHTML = "📣 " + escapeHTML(active[0].title) + (active[0].discount > 0 ? " · " + active[0].discount + "% off" : "");
   }
-  function suggestStayType(nights) {
-    if (nights >= 30) return "monthly";
-    if (nights >= 7) return "weekly";
-    return "daily";
-  }
-  function calcStay(room, checkIn, checkOut, stayType) {
-    var nights = nightsBetween(checkIn, checkOut);
+  function suggestStayType(nights) { if (nights >= 30) return "monthly"; if (nights >= 7) return "weekly"; return "daily"; }
+  function calcStay(room, ci, co, stayType) {
+    var nights = nightsBetween(ci, co);
     if (nights < 1) return null;
     var rate, units, unit;
     if (stayType === "monthly" && room.monthlyRate > 0) { rate = room.monthlyRate; units = Math.ceil(nights / 30); unit = "month"; }
@@ -1744,55 +1688,35 @@ button{cursor:pointer}
     var taxableBase = subtotal - discount;
     var taxRate = Math.max(0, Number(settings.taxRate) || 0);
     var tax = taxableBase * (taxRate / 100);
-    return { nights: nights, rate: rate, units: units, unit: unit, subtotal: subtotal,
-      discountPct: discountPct, discount: discount, tax: tax, taxRate: taxRate, total: taxableBase + tax };
+    return { nights: nights, rate: rate, units: units, unit: unit, subtotal: subtotal, discountPct: discountPct, discount: discount, tax: tax, taxRate: taxRate, total: taxableBase + tax };
   }
 
   /* ============================================================
-     Rooms grid
+     Rooms
      ============================================================ */
   var roomsGrid = $("rooms-grid");
-
   function amenityBadgesHTML() {
     var out = "";
     if (settings.wifiAvailable) out += '<span class="amenity-badge">Wi-Fi</span>';
     if (settings.breakfastAvailable) out += '<span class="amenity-badge">Breakfast</span>';
     return out ? '<div class="amenity-badges">' + out + '</div>' : "";
   }
-
   function renderRooms() {
     if (!roomsGrid) return;
     roomsGrid.innerHTML = "";
-    if (!rooms.length) {
-      roomsGrid.innerHTML = '<div class="empty-menu">No rooms yet — open the console to add one.</div>';
-      return;
-    }
+    if (!rooms.length) { roomsGrid.innerHTML = '<div class="empty-menu">No rooms yet — open the console to add one.</div>'; return; }
     rooms.forEach(function (r) {
       var photo = r.photos[0];
       var card = document.createElement("article");
-      card.className = "room-card";
-      card.dataset.pid = r.id;
-
+      card.className = "room-card"; card.dataset.pid = r.id;
       var media = photo
-        ? '<div class="room-media">' +
-            '<img src="' + photo + '" alt="' + escapeAttr(r.name) + '" loading="lazy" decoding="async">' +
-            '<span class="room-tag">' + escapeHTML(r.type) + '</span>' +
-            (r.photos.length > 1 ? '<span class="room-photo-count">' + r.photos.length + '</span>' : '') +
-          '</div>'
-        : '<div class="room-media">' +
-            '<div class="emoji" aria-hidden="true">' + escapeHTML(r.emoji) + '</div>' +
-            '<span class="room-tag">' + escapeHTML(r.type) + '</span>' +
-          '</div>';
-
+        ? '<div class="room-media"><img src="' + photo + '" alt="' + escapeAttr(r.name) + '" loading="lazy" decoding="async"><span class="room-tag">' + escapeHTML(r.type) + '</span>' + (r.photos.length > 1 ? '<span class="room-photo-count">' + r.photos.length + '</span>' : '') + '</div>'
+        : '<div class="room-media"><div class="emoji" aria-hidden="true">' + escapeHTML(r.emoji) + '</div><span class="room-tag">' + escapeHTML(r.type) + '</span></div>';
       card.innerHTML = media +
         '<div class="room-content">' +
           '<h3 class="room-name">' + escapeHTML(r.name) + '</h3>' +
           '<p class="room-desc">' + escapeHTML(r.desc || "") + '</p>' +
-          '<div class="room-meta">' +
-            '<span>👥 ' + r.maxGuests + '</span>' +
-            (r.beds ? '<span>🛏 ' + r.beds + '</span>' : '') +
-            (r.baths ? '<span>🚿 ' + r.baths + '</span>' : '') +
-          '</div>' +
+          '<div class="room-meta"><span>👥 ' + r.maxGuests + '</span>' + (r.beds ? '<span>🛏 ' + r.beds + '</span>' : '') + (r.baths ? '<span>🚿 ' + r.baths + '</span>' : '') + '</div>' +
           amenityBadgesHTML() +
           '<p class="room-price">' + money(r.dailyRate) + ' <span>/ night</span></p>' +
           '<div class="room-actions">' +
@@ -1803,55 +1727,28 @@ button{cursor:pointer}
       roomsGrid.appendChild(card);
     });
   }
-
   on(roomsGrid, "click", function (e) {
     var v = e.target.closest("[data-view]");
-    if (v) {
-      var r = rooms.find(function (x) { return x.id === Number(v.dataset.view); });
-      if (r) openRoomDetail(r);
-      return;
-    }
+    if (v) { var r = rooms.find(function (x) { return x.id === Number(v.dataset.view); }); if (r) openRoomDetail(r); return; }
     var b = e.target.closest("[data-book]");
-    if (b) {
-      var r2 = rooms.find(function (x) { return x.id === Number(b.dataset.book); });
-      if (r2) openBooking(r2);
-    }
+    if (b) { var r2 = rooms.find(function (x) { return x.id === Number(b.dataset.book); }); if (r2) openBooking(r2); }
   });
 
   /* ============================================================
-     Room detail modal
+     Room detail
      ============================================================ */
   var roomModal = $("room-modal");
   var activeRoom = null, activeRoomPhotoIdx = 0;
-
-  function openRoomDetail(r) {
-    activeRoom = r;
-    activeRoomPhotoIdx = 0;
-    renderRoomDetail();
-    openModal(roomModal);
-  }
+  function openRoomDetail(r) { activeRoom = r; activeRoomPhotoIdx = 0; renderRoomDetail(); openModal(roomModal); }
   function renderRoomDetail() {
     if (!activeRoom) return;
-    var img = $("room-modal-img");
-    var photos = activeRoom.photos;
-    if (img) {
-      if (photos.length) {
-        img.src = photos[activeRoomPhotoIdx];
-        img.alt = activeRoom.name;
-        img.hidden = false;
-      } else {
-        img.hidden = true;
-      }
-    }
-    var counter = $("room-photo-counter");
-    var multi = photos.length > 1;
+    var img = $("room-modal-img"), photos = activeRoom.photos;
+    if (img) { if (photos.length) { img.src = photos[activeRoomPhotoIdx]; img.alt = activeRoom.name; img.hidden = false; } else img.hidden = true; }
+    var counter = $("room-photo-counter"), multi = photos.length > 1;
     var prev = $("room-photo-prev"), next = $("room-photo-next");
     if (prev) prev.style.display = multi ? "flex" : "none";
     if (next) next.style.display = multi ? "flex" : "none";
-    if (counter) {
-      counter.hidden = !multi;
-      counter.textContent = (activeRoomPhotoIdx + 1) + " / " + photos.length;
-    }
+    if (counter) { counter.hidden = !multi; counter.textContent = (activeRoomPhotoIdx + 1) + " / " + photos.length; }
     var t = $("room-modal-title"); if (t) t.textContent = activeRoom.name;
     var p = $("room-modal-price"); if (p) p.innerHTML = money(activeRoom.dailyRate) + ' <span>/ night</span>';
     var d = $("room-modal-desc"); if (d) d.textContent = activeRoom.desc || "";
@@ -1869,69 +1766,42 @@ button{cursor:pointer}
     activeRoomPhotoIdx = (activeRoomPhotoIdx + 1) % activeRoom.photos.length;
     renderRoomDetail();
   });
-  on($("room-modal-book"), "click", function () {
-    if (activeRoom) { closeModal(roomModal); openBooking(activeRoom); }
-  });
+  on($("room-modal-book"), "click", function () { if (activeRoom) { closeModal(roomModal); openBooking(activeRoom); } });
   on(roomModal, "click", function (e) { if (e.target === roomModal) closeModal(roomModal); });
 
   /* ============================================================
      Booking modal
      ============================================================ */
   var bookingModal = $("booking-modal");
-  var bookCheckIn = $("book-checkin");
-  var bookCheckOut = $("book-checkout");
-  var bookGuests = $("book-guests");
-  var bookGuestsLabel = $("book-guests-label");
-  var bookGuestName = $("book-guest-name");
-  var bookGuestPhone = $("book-guest-phone");
-  var bookSaveGuest = $("book-save-guest");
-  var bookPhoneError = $("book-phone-error");
+  var bookCheckIn = $("book-checkin"), bookCheckOut = $("book-checkout");
+  var bookGuests = $("book-guests"), bookGuestsLabel = $("book-guests-label");
+  var bookGuestName = $("book-guest-name"), bookGuestPhone = $("book-guest-phone");
+  var bookSaveGuest = $("book-save-guest"), bookPhoneError = $("book-phone-error");
   var bookPricePreview = $("book-price-preview");
-
   var activeBooking = null, bookingRoom = null, stayTypeManuallySet = false;
 
   function openBooking(r) {
     if (!r) return;
-    bookingRoom = r;
-    stayTypeManuallySet = false;
+    bookingRoom = r; stayTypeManuallySet = false;
     var t = $("booking-title"); if (t) t.textContent = "Book — " + r.name;
-
     var now = new Date();
-    if (bookCheckIn) {
-      bookCheckIn.value = dateOnly(now);
-      bookCheckIn.min = dateOnly(now);
-    }
-    if (bookCheckOut) {
-      bookCheckOut.value = dateOnly(new Date(now.getTime() + 86400000));
-    }
-    if (bookGuests) {
-      bookGuests.min = 1;
-      bookGuests.max = r.maxGuests;
-      bookGuests.value = Math.min(2, r.maxGuests);
-    }
+    if (bookCheckIn) { bookCheckIn.value = dateOnly(now); bookCheckIn.min = dateOnly(now); }
+    if (bookCheckOut) bookCheckOut.value = dateOnly(new Date(now.getTime() + 86400000));
+    if (bookGuests) { bookGuests.min = 1; bookGuests.max = r.maxGuests; bookGuests.value = Math.min(2, r.maxGuests); }
     if (bookGuestsLabel) bookGuestsLabel.textContent = "Guests (max " + r.maxGuests + ")";
     if (bookGuestName) bookGuestName.value = "";
     if (bookGuestPhone) { bookGuestPhone.value = ""; bookGuestPhone.classList.remove("is-invalid"); }
     if (bookPhoneError) bookPhoneError.textContent = "";
     if (bookSaveGuest) bookSaveGuest.checked = true;
-
     [["tab-daily", r.dailyRate], ["tab-weekly", r.weeklyRate], ["tab-monthly", r.monthlyRate]].forEach(function (p) {
       var b = $(p[0]); if (b) b.disabled = !(p[1] > 0);
     });
-
     setStayType("daily");
     updatePricePreview();
     openModal(bookingModal);
   }
-  function currentStayType() {
-    var a = document.querySelector('.stay-tab.active[data-stay]');
-    return a ? a.dataset.stay : "daily";
-  }
-  function setStayType(t) {
-    els('.stay-tab[data-stay]').forEach(function (el) {
-      el.classList.toggle("active", el.dataset.stay === t);
-    });
-  }
+  function currentStayType() { var a = document.querySelector('.stay-tab.active[data-stay]'); return a ? a.dataset.stay : "daily"; }
+  function setStayType(t) { els('.stay-tab[data-stay]').forEach(function (el) { el.classList.toggle("active", el.dataset.stay === t); }); }
   function updatePricePreview() {
     if (!bookingRoom || !bookCheckIn || !bookCheckOut || !bookPricePreview) return;
     var ci = bookCheckIn.value, co = bookCheckOut.value;
@@ -1953,15 +1823,12 @@ button{cursor:pointer}
   els('.stay-tab[data-stay]').forEach(function (tab) {
     on(tab, "click", function () {
       if (tab.disabled) return;
-      stayTypeManuallySet = true;
-      setStayType(tab.dataset.stay);
-      updatePricePreview();
+      stayTypeManuallySet = true; setStayType(tab.dataset.stay); updatePricePreview();
     });
   });
   on(bookCheckIn, "change", function () {
     if (bookCheckOut && bookCheckOut.value && nightsBetween(bookCheckIn.value, bookCheckOut.value) < 1) {
-      var ci = parseDate(bookCheckIn.value);
-      bookCheckOut.value = dateOnly(new Date(ci.getTime() + 86400000));
+      var ci = parseDate(bookCheckIn.value); bookCheckOut.value = dateOnly(new Date(ci.getTime() + 86400000));
     }
     updatePricePreview();
   });
@@ -1974,15 +1841,12 @@ button{cursor:pointer}
 
   on($("book-continue"), "click", function () {
     if (!bookingRoom) return;
-    var ci = bookCheckIn ? bookCheckIn.value : "";
-    var co = bookCheckOut ? bookCheckOut.value : "";
+    var ci = bookCheckIn ? bookCheckIn.value : "", co = bookCheckOut ? bookCheckOut.value : "";
     var nights = nightsBetween(ci, co);
     if (nights < 1) { if (bookPricePreview) bookPricePreview.textContent = "⚠ Please select valid dates."; return; }
     var calc = calcStay(bookingRoom, ci, co, currentStayType());
     if (!calc) { if (bookPricePreview) bookPricePreview.textContent = "⚠ Stay type not available."; return; }
-
     var phone = bookGuestPhone ? bookGuestPhone.value.trim() : "";
-    // Require phone only if setting is on
     if (settings.requirePhone && !validPhone(phone)) {
       if (bookGuestPhone) { bookGuestPhone.classList.add("is-invalid"); bookGuestPhone.focus(); }
       if (bookPhoneError) bookPhoneError.textContent = "Enter a valid WhatsApp phone number";
@@ -1990,40 +1854,27 @@ button{cursor:pointer}
     }
     if (bookGuestPhone) bookGuestPhone.classList.remove("is-invalid");
     if (bookPhoneError) bookPhoneError.textContent = "";
-
     activeBooking = {
-      roomId: bookingRoom.id, roomName: bookingRoom.name,
-      roomAddress: bookingRoom.address || "",
+      roomId: bookingRoom.id, roomName: bookingRoom.name, roomAddress: bookingRoom.address || "",
       checkIn: ci, checkOut: co, nights: nights,
       guests: Math.max(1, Number(bookGuests ? bookGuests.value : 1) || 1),
       stayType: currentStayType(), calc: calc,
       guestName: bookGuestName ? bookGuestName.value.trim() : "",
       guestPhone: phone
     };
-
     if (bookSaveGuest && bookSaveGuest.checked && phone) saveGuest(phone, activeBooking.guestName);
-    closeModal(bookingModal);
-    openPayment();
+    closeModal(bookingModal); openPayment();
   });
 
   /* ============================================================
      Payment
      ============================================================ */
-  var payModal = $("pay-modal");
-  var payAmount = $("pay-amount");
-  var payPhone = $("pay-phone");
-  var payPhoneError = $("pay-phone-error");
-  var payActions = $("pay-actions");
-  var payProgress = $("pay-progress");
-  var progressText = $("progress-text");
-  var payConfirm = $("pay-confirm");
-  var payStepPhone = $("pay-step-phone");
-  var payStepUssd = $("pay-step-ussd");
-  var ussdHint = $("ussd-hint");
-
-  var selectedNetwork = "Airtel";
-  var paymentInProgress = false;
-  var lastBooking = null;
+  var payModal = $("pay-modal"), payAmount = $("pay-amount"), payPhone = $("pay-phone");
+  var payPhoneError = $("pay-phone-error"), payActions = $("pay-actions");
+  var payProgress = $("pay-progress"), progressText = $("progress-text");
+  var payConfirm = $("pay-confirm"), payStepPhone = $("pay-step-phone");
+  var payStepUssd = $("pay-step-ussd"), ussdHint = $("ussd-hint");
+  var selectedNetwork = "Airtel", paymentInProgress = false, lastBooking = null;
 
   function openPayment() {
     if (!activeBooking) return;
@@ -2041,9 +1892,7 @@ button{cursor:pointer}
     on(tab, "click", function () {
       if (paymentInProgress) return;
       els('.net-tab[data-net]').forEach(function (t) { t.classList.remove("active"); });
-      tab.classList.add("active");
-      selectedNetwork = tab.dataset.net;
-      applyNetwork();
+      tab.classList.add("active"); selectedNetwork = tab.dataset.net; applyNetwork();
     });
   });
   function applyNetwork() {
@@ -2052,8 +1901,7 @@ button{cursor:pointer}
     if (payStepUssd) payStepUssd.style.display = isUssd ? "block" : "none";
     if (isUssd && activeBooking) {
       var localAmt = activeBooking.calc.total * (rates[activeCurrency] || 1);
-      if (ussdHint) ussdHint.innerHTML = "Dial on your phone:<br>Airtel: <code>" + ussdFor("Airtel", localAmt, settings.shopCode) +
-        "</code><br>MTN: <code>" + ussdFor("MTN", localAmt, settings.shopCode) + "</code>";
+      if (ussdHint) ussdHint.innerHTML = "Dial on your phone:<br>Airtel: <code>" + ussdFor("Airtel", localAmt, settings.shopCode) + "</code><br>MTN: <code>" + ussdFor("MTN", localAmt, settings.shopCode) + "</code>";
       if (payConfirm) payConfirm.textContent = "I have paid";
     } else if (selectedNetwork === "Phone") { if (payConfirm) payConfirm.textContent = "Pay from this number"; }
     else if (selectedNetwork === "MTN") { if (payConfirm) payConfirm.textContent = "Pay with MTN"; }
@@ -2074,7 +1922,6 @@ button{cursor:pointer}
   }
   on($("pay-cancel"), "click", function () { if (!paymentInProgress) closeModal(payModal); });
   on(payModal, "click", function (e) { if (e.target === payModal && !paymentInProgress) closeModal(payModal); });
-
   on(payConfirm, "click", function () {
     if (selectedNetwork === "USSD") { finalize("USSD", "CASH-" + Date.now().toString().slice(-6)); return; }
     var raw = payPhone ? payPhone.value.trim() : "";
@@ -2088,15 +1935,10 @@ button{cursor:pointer}
     var network = selectedNetwork;
     if (selectedNetwork === "Phone") {
       network = detectNetwork(raw);
-      if (!network) {
-        if (payPhone) payPhone.classList.add("is-invalid");
-        if (payPhoneError) payPhoneError.textContent = "Couldn't detect network";
-        return;
-      }
+      if (!network) { if (payPhone) payPhone.classList.add("is-invalid"); if (payPhoneError) payPhoneError.textContent = "Couldn't detect network"; return; }
     }
     startPush(network);
   });
-
   function startPush(network) {
     paymentInProgress = true;
     if (payActions) payActions.style.display = "none";
@@ -2110,22 +1952,18 @@ button{cursor:pointer}
       finalize(network, ref);
     }, 3200);
   }
-
   function finalize(network, ref) {
     if (!activeBooking) return;
     var b = activeBooking;
     var record = {
-      id: "BK-" + Date.now().toString().slice(-6),
-      ts: Date.now(),
+      id: "BK-" + Date.now().toString().slice(-6), ts: Date.now(),
       roomId: b.roomId, roomName: b.roomName, roomAddress: b.roomAddress,
       checkIn: b.checkIn, checkOut: b.checkOut, nights: b.nights,
       guests: b.guests, stayType: b.stayType, calc: b.calc,
       guestName: b.guestName, guestPhone: b.guestPhone,
       network: network, ref: ref, acknowledged: false
     };
-    bookings.unshift(record);
-    saveBookings();
-    lastBooking = record;
+    bookings.unshift(record); saveBookings(); lastBooking = record;
     setTimeout(function () {
       closeModal(payModal);
       if (payProgress) payProgress.classList.remove("visible");
@@ -2175,47 +2013,29 @@ button{cursor:pointer}
     if (pre) pre.textContent = buildBookingText(b, { network: b.network, ref: b.ref });
     openModal(receiptModal);
   }
-  on($("receipt-to-guest"), "click", function () {
-    if (!lastBooking) return;
-    openWhatsApp(lastBooking.guestPhone, buildBookingText(lastBooking, { network: lastBooking.network, ref: lastBooking.ref }));
-  });
-  on($("receipt-to-concierge"), "click", function () {
-    if (!lastBooking) return;
-    openWhatsApp(settings.shopWhatsApp, buildConciergeAlert(lastBooking));
-  });
+  on($("receipt-to-guest"), "click", function () { if (lastBooking) openWhatsApp(lastBooking.guestPhone, buildBookingText(lastBooking, { network: lastBooking.network, ref: lastBooking.ref })); });
+  on($("receipt-to-concierge"), "click", function () { if (lastBooking) openWhatsApp(settings.shopWhatsApp, buildConciergeAlert(lastBooking)); });
   on(receiptModal, "click", function (e) { if (e.target === receiptModal) closeModal(receiptModal); });
 
   /* ============================================================
-     Alerts
+     Alerts + guests
      ============================================================ */
   function updateAlertBadge() {
     var unread = bookings.filter(function (b) { return !b.acknowledged; }).length;
-    var badge = $("alert-badge");
-    if (badge) { badge.textContent = unread || ""; badge.classList.toggle("zero", unread === 0); }
-    var tb = $("bookings-tab-badge");
-    if (tb) { tb.textContent = unread || ""; tb.style.display = unread ? "inline-flex" : "none"; }
+    var badge = $("alert-badge"); if (badge) { badge.textContent = unread || ""; badge.classList.toggle("zero", unread === 0); }
+    var tb = $("bookings-tab-badge"); if (tb) { tb.textContent = unread || ""; tb.style.display = unread ? "inline-flex" : "none"; }
   }
   function newBookingAlert(b) {
-    beep();
-    toast("🔔 New booking received");
+    beep(); toast("🔔 New booking received");
     if ("Notification" in window && Notification.permission === "granted") {
       try { new Notification(settings.businessName + " — new booking", { body: b.roomName + " · " + money(b.calc.total) }); } catch (_) {}
     }
   }
-
-  /* ============================================================
-     Guests
-     ============================================================ */
   function saveGuest(phone, name) {
     var clean = String(phone).replace(/\s+/g, "");
     var existing = guests.find(function (g) { return g.phone === clean; });
-    if (existing) {
-      if (name && !existing.name) existing.name = name;
-      existing.lastBookingAt = Date.now();
-      existing.bookingCount = (existing.bookingCount || 0) + 1;
-    } else {
-      guests.push({ phone: clean, name: name || "", savedAt: Date.now(), lastBookingAt: Date.now(), bookingCount: 1 });
-    }
+    if (existing) { if (name && !existing.name) existing.name = name; existing.lastBookingAt = Date.now(); existing.bookingCount = (existing.bookingCount || 0) + 1; }
+    else guests.push({ phone: clean, name: name || "", savedAt: Date.now(), lastBookingAt: Date.now(), bookingCount: 1 });
     saveGuests();
   }
 
@@ -2232,18 +2052,13 @@ button{cursor:pointer}
         try {
           var w = img.width, h = img.height;
           var scale = Math.min(1, PHOTO_MAX_DIM / Math.max(w, h));
-          w = Math.max(1, Math.round(w * scale));
-          h = Math.max(1, Math.round(h * scale));
-          var canvas = document.createElement("canvas");
-          canvas.width = w; canvas.height = h;
+          w = Math.max(1, Math.round(w * scale)); h = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h;
           canvas.getContext("2d").drawImage(img, 0, 0, w, h);
           resolve(canvas.toDataURL("image/jpeg", PHOTO_QUALITY));
         } catch (err) { reject(err); }
       };
-      img.onerror = function () {
-        try { URL.revokeObjectURL(url); } catch (_) {}
-        reject(new Error("bad image"));
-      };
+      img.onerror = function () { try { URL.revokeObjectURL(url); } catch (_) {}; reject(new Error("bad image")); };
       img.src = url;
     });
   }
@@ -2253,7 +2068,6 @@ button{cursor:pointer}
      ============================================================ */
   var lockModal = $("lock-modal");
   var lockMode = "enter", lockOnSuccess = null, lockSubmitting = false;
-
   function openLock(mode, onSuccess) {
     lockMode = mode; lockOnSuccess = onSuccess || null;
     ["lock-pin", "lock-pin2", "lock-old"].forEach(function (id) { var el = $(id); if (el) el.value = ""; });
@@ -2261,28 +2075,16 @@ button{cursor:pointer}
     var oldF = $("lock-old-field"), pinL = $("lock-pin-label"), pin2F = $("lock-pin2-field"), submit = $("lock-submit");
     if (mode === "set") {
       var t1 = $("lock-title"), s1 = $("lock-sub");
-      if (t1) t1.textContent = "🔒 Set seller PIN";
-      if (s1) s1.textContent = "Choose an 8-digit PIN.";
-      if (oldF) oldF.hidden = true;
-      if (pinL) pinL.textContent = "New PIN";
-      if (pin2F) pin2F.hidden = false;
-      if (submit) submit.textContent = "Set PIN";
+      if (t1) t1.textContent = "🔒 Set seller PIN"; if (s1) s1.textContent = "Choose an 8-digit PIN.";
+      if (oldF) oldF.hidden = true; if (pinL) pinL.textContent = "New PIN"; if (pin2F) pin2F.hidden = false; if (submit) submit.textContent = "Set PIN";
     } else if (mode === "change") {
       var t2 = $("lock-title"), s2 = $("lock-sub");
-      if (t2) t2.textContent = "🔒 Change PIN";
-      if (s2) s2.textContent = "Enter your current PIN, then choose a new one.";
-      if (oldF) oldF.hidden = false;
-      if (pinL) pinL.textContent = "New PIN";
-      if (pin2F) pin2F.hidden = false;
-      if (submit) submit.textContent = "Update";
+      if (t2) t2.textContent = "🔒 Change PIN"; if (s2) s2.textContent = "Enter your current PIN, then choose a new one.";
+      if (oldF) oldF.hidden = false; if (pinL) pinL.textContent = "New PIN"; if (pin2F) pin2F.hidden = false; if (submit) submit.textContent = "Update";
     } else {
       var t3 = $("lock-title"), s3 = $("lock-sub");
-      if (t3) t3.textContent = "🔒 Seller console";
-      if (s3) s3.textContent = "Enter your 8-digit PIN.";
-      if (oldF) oldF.hidden = true;
-      if (pinL) pinL.textContent = "PIN";
-      if (pin2F) pin2F.hidden = true;
-      if (submit) submit.textContent = "Unlock";
+      if (t3) t3.textContent = "🔒 Seller console"; if (s3) s3.textContent = "Enter your 8-digit PIN.";
+      if (oldF) oldF.hidden = true; if (pinL) pinL.textContent = "PIN"; if (pin2F) pin2F.hidden = true; if (submit) submit.textContent = "Unlock";
     }
     openModal(lockModal);
   }
@@ -2290,8 +2092,7 @@ button{cursor:pointer}
     on($(id), "input", function (e) { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 8); });
   });
   on($("lock-submit"), "click", async function () {
-    if (lockSubmitting) return;
-    lockSubmitting = true;
+    if (lockSubmitting) return; lockSubmitting = true;
     var err = $("lock-error"); if (err) err.textContent = "";
     try {
       var p1El = $("lock-pin"), p2El = $("lock-pin2"), oldEl = $("lock-old");
@@ -2316,9 +2117,7 @@ button{cursor:pointer}
       }
     } finally { lockSubmitting = false; }
   });
-  on(lockModal, "keydown", function (e) {
-    if (e.key === "Enter") { e.preventDefault(); var b = $("lock-submit"); if (b) b.click(); }
-  });
+  on(lockModal, "keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); var b = $("lock-submit"); if (b) b.click(); } });
   on(lockModal, "click", function (e) { if (e.target === lockModal) closeModal(lockModal); });
 
   on($("open-console"), "click", function () {
@@ -2330,7 +2129,7 @@ button{cursor:pointer}
   });
 
   /* ============================================================
-     Seller console
+     Console
      ============================================================ */
   var consoleModal = $("console-modal");
   function showConsole() {
@@ -2356,16 +2155,21 @@ button{cursor:pointer}
 
   function fillSettings() {
     var map = {
-      "set-name": "businessName", "set-wa": "shopWhatsApp",
-      "set-code": "shopCode", "set-tax": "taxRate",
-      "set-agent-name": "agentName", "set-agent-role": "agentRole",
-      "set-agent-phone": "agentPhone", "set-agent-email": "agentEmail",
-      "set-agent-bio": "agentBio", "set-address": "shopAddress",
+      "set-name": "businessName", "set-wa": "shopWhatsApp", "set-code": "shopCode", "set-tax": "taxRate",
+      "set-agent-name": "agentName", "set-agent-role": "agentRole", "set-agent-phone": "agentPhone",
+      "set-agent-email": "agentEmail", "set-agent-bio": "agentBio", "set-address": "shopAddress",
       "set-lat": "shopLat", "set-lng": "shopLng"
     };
-    Object.keys(map).forEach(function (id) {
-      var el = $(id); if (el) el.value = settings[map[id]] != null ? settings[map[id]] : "";
-    });
+    Object.keys(map).forEach(function (id) { var el = $(id); if (el) el.value = settings[map[id]] != null ? settings[map[id]] : ""; });
+
+    // Background URL — only show if it's a URL (not a data URL)
+    var bgUrl = $("set-bg-url");
+    if (bgUrl) {
+      bgUrl.value = (settings.backgroundImage && /^https?:\/\//i.test(settings.backgroundImage))
+        ? settings.backgroundImage : "";
+    }
+    updateBgPreview();
+
     var cur = $("set-currency"); if (cur) cur.value = settings.forceCurrency || "auto";
     var wifi = $("set-wifi"); if (wifi) wifi.checked = !!settings.wifiAvailable;
     var bf = $("set-breakfast"); if (bf) bf.checked = !!settings.breakfastAvailable;
@@ -2379,17 +2183,22 @@ button{cursor:pointer}
     var warn = $("wa-warning"); if (warn) warn.classList.toggle("show", settings.shopWhatsApp === DEFAULT_SETTINGS.shopWhatsApp);
 
     var thumb = $("agent-photo-thumb");
-    if (thumb) {
-      if (settings.agentPhoto) thumb.innerHTML = '<img src="' + settings.agentPhoto + '" alt="Concierge">';
-      else thumb.textContent = initialsOf(settings.agentName);
-    }
-    var rm = $("set-agent-photo-remove");
-    if (rm) rm.style.display = settings.agentPhoto ? "block" : "none";
+    if (thumb) { if (settings.agentPhoto) thumb.innerHTML = '<img src="' + settings.agentPhoto + '" alt="Concierge">'; else thumb.textContent = initialsOf(settings.agentName); }
+    var rm = $("set-agent-photo-remove"); if (rm) rm.style.display = settings.agentPhoto ? "block" : "none";
   }
 
   on($("set-save"), "click", function () {
     var read = function (id) { var el = $(id); return el ? el.value : ""; };
     var readCheck = function (id) { var el = $(id); return !!(el && el.checked); };
+
+    // Preserve existing data-URL upload if URL field is empty
+    var bgUrl = String(read("set-bg-url") || "").trim();
+    var newBg = "";
+    if (bgUrl && /^https?:\/\//i.test(bgUrl)) {
+      newBg = bgUrl;
+    } else if (settings.backgroundImage && settings.backgroundImage.indexOf("data:image/") === 0) {
+      newBg = settings.backgroundImage;
+    }
 
     var raw = {
       businessName: read("set-name"),
@@ -2413,15 +2222,14 @@ button{cursor:pointer}
       requirePhone: readCheck("set-require-phone"),
       defaultPage: read("set-default-page"),
       agentPhoto: settings.agentPhoto,
+      backgroundImage: newBg,
       promos: settings.promos
     };
 
     settings = validateSettings(raw);
     saveSettings();
-    if (settings.forceCurrency && settings.forceCurrency !== "auto") {
-      activeCurrency = settings.forceCurrency;
-      updateCurrencySelect();
-    }
+
+    if (settings.forceCurrency && settings.forceCurrency !== "auto") { activeCurrency = settings.forceCurrency; updateCurrencySelect(); }
     renderAll();
     fillSettings();
     refreshMapMarkers();
@@ -2429,6 +2237,38 @@ button{cursor:pointer}
     toast("Settings saved");
   });
 
+  /* ---------- Background image controls ---------- */
+  on($("set-bg-upload-btn"), "click", function () { var el = $("bg-image-input"); if (el) el.click(); });
+  on($("bg-image-input"), "change", async function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try {
+      var dataUrl = await compressBackground(f);
+      settings.backgroundImage = dataUrl;
+      saveSettings();
+      fillSettings();
+      applyMainBackground();
+      toast("Background updated");
+    } catch (_) { toast("Could not process image"); }
+    e.target.value = "";
+  });
+  on($("set-bg-reset"), "click", function () {
+    settings.backgroundImage = "";
+    saveSettings();
+    fillSettings();
+    applyMainBackground();
+    toast("Background reset to default");
+  });
+  on($("set-bg-url"), "input", function (e) {
+    var v = String(e.target.value || "").trim();
+    var img = $("bg-preview-img");
+    if (!img) return;
+    if (v && /^https?:\/\//i.test(v)) img.src = v;
+    else if (settings.backgroundImage && settings.backgroundImage.indexOf("data:image/") === 0) img.src = settings.backgroundImage;
+    else img.src = DEFAULT_BG_URL;
+  });
+
+  /* ---------- Agent photo ---------- */
   on($("set-agent-photo-btn"), "click", function () { var el = $("agent-photo-input"); if (el) el.click(); });
   on($("agent-photo-input"), "change", async function (e) {
     var f = e.target.files && e.target.files[0];
@@ -2442,11 +2282,7 @@ button{cursor:pointer}
     } catch (_) { toast("Could not process image"); }
   });
   on($("set-agent-photo-remove"), "click", function () {
-    settings.agentPhoto = "";
-    saveSettings();
-    fillSettings();
-    renderConcierge();
-    toast("Photo removed");
+    settings.agentPhoto = ""; saveSettings(); fillSettings(); renderConcierge(); toast("Photo removed");
   });
 
   on($("set-loc-here"), "click", function () {
@@ -2463,19 +2299,15 @@ button{cursor:pointer}
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   });
-  on($("set-change-pin"), "click", function () {
-    if (!localStorage.getItem(K.pin)) openLock("set", null); else openLock("change", null);
-  });
-  on($("set-lock-now"), "click", function () {
-    lockConsole(); closeModal(consoleModal); toast("Locked");
-  });
+  on($("set-change-pin"), "click", function () { if (!localStorage.getItem(K.pin)) openLock("set", null); else openLock("change", null); });
+  on($("set-lock-now"), "click", function () { lockConsole(); closeModal(consoleModal); toast("Locked"); });
   on($("set-reset"), "click", function () {
     if (!confirm("Reset ALL data?")) return;
     Object.keys(K).forEach(function (k) { try { localStorage.removeItem(K[k]); } catch (_) {} });
     location.reload();
   });
 
-  /* ---------- Rooms tab ---------- */
+  /* ---------- Console rooms ---------- */
   var consoleRooms = $("console-rooms");
   var photoInput = $("photo-input");
   var pendingPhotoTarget = null;
@@ -2486,32 +2318,20 @@ button{cursor:pointer}
     if (!rooms.length) { consoleRooms.innerHTML = '<div class="list-empty">No rooms yet</div>'; return; }
     rooms.forEach(function (r) {
       var row = document.createElement("div");
-      row.className = "mg-row";
-      row.dataset.id = r.id;
-
+      row.className = "mg-row"; row.dataset.id = r.id;
       var thumbs = r.photos.map(function (src, i) {
-        return '<div class="thumb"><img src="' + src + '" alt="">' +
-          '<button class="thumb-x" type="button" data-rm-photo="' + r.id + '" data-i="' + i + '" aria-label="Remove">×</button></div>';
+        return '<div class="thumb"><img src="' + src + '" alt=""><button class="thumb-x" type="button" data-rm-photo="' + r.id + '" data-i="' + i + '" aria-label="Remove">×</button></div>';
       }).join("");
       var full = r.photos.length >= MAX_PHOTOS;
       var photoLabel = '<span class="mg-photo-label' + (full ? ' full' : '') + '">' + r.photos.length + ' / ' + MAX_PHOTOS + '</span>';
-
       row.innerHTML =
         '<div class="mg-photos">' + photoLabel + thumbs +
-          '<button class="thumb-add" type="button" data-add-photo="' + r.id + '"' +
-            (full ? " disabled" : "") +
-            ' title="' + (full ? "Photo limit reached" : "Click to select one or more photos") + '>' +
-            (full ? '✓' : '＋') +
-          '</button>' +
+          '<button class="thumb-add" type="button" data-add-photo="' + r.id + '"' + (full ? " disabled" : "") + ' title="' + (full ? "Photo limit reached" : "Add one or more photos") + '>' + (full ? '✓' : '＋') + '</button>' +
         '</div>' +
         '<div class="mg-fields">' +
           '<input class="emoji-in" data-f="emoji" maxlength="4" value="' + escapeAttr(r.emoji) + '">' +
           '<input data-f="name" value="' + escapeAttr(r.name) + '" placeholder="Room name">' +
-          '<select data-f="type">' +
-            ["Deluxe Room","Suite","Presidential Suite","Family Room"].map(function (t) {
-              return '<option' + (t === r.type ? " selected" : "") + '>' + t + '</option>';
-            }).join("") +
-          '</select>' +
+          '<select data-f="type">' + ["Deluxe Room","Suite","Presidential Suite","Family Room"].map(function (t) { return '<option' + (t === r.type ? " selected" : "") + '>' + t + '</option>'; }).join("") + '</select>' +
           '<input data-f="daily" type="number" min="0" step="0.01" value="' + (r.dailyRate || "") + '" placeholder="Daily">' +
           '<input data-f="weekly" type="number" min="0" step="0.01" value="' + (r.weeklyRate || "") + '" placeholder="Weekly">' +
         '</div>' +
@@ -2540,11 +2360,7 @@ button{cursor:pointer}
 
   on(consoleRooms, "click", function (e) {
     var addBtn = e.target.closest("[data-add-photo]");
-    if (addBtn) {
-      pendingPhotoTarget = Number(addBtn.dataset.addPhoto);
-      if (photoInput) { photoInput.value = ""; photoInput.click(); }
-      return;
-    }
+    if (addBtn) { pendingPhotoTarget = Number(addBtn.dataset.addPhoto); if (photoInput) { photoInput.value = ""; photoInput.click(); } return; }
     var rmBtn = e.target.closest("[data-rm-photo]");
     if (rmBtn) {
       var r = rooms.find(function (x) { return x.id === Number(rmBtn.dataset.rmPhoto); });
@@ -2553,8 +2369,7 @@ button{cursor:pointer}
     }
     var btn = e.target.closest("button[data-act]");
     if (!btn) return;
-    var id = Number(btn.dataset.id);
-    var row = btn.closest(".mg-row");
+    var id = Number(btn.dataset.id), row = btn.closest(".mg-row");
 
     if (btn.dataset.act === "save") {
       var room = rooms.find(function (x) { return x.id === id; });
@@ -2574,15 +2389,13 @@ button{cursor:pointer}
       room.lng = Number(row.querySelector('[data-f="lng"]').value) || 0;
       room.address = row.querySelector('[data-f="address"]').value.trim();
       room.desc = row.querySelector('[data-f="desc"]').value.trim();
-      saveRooms();
-      renderConsoleRooms(); renderRooms(); refreshMapMarkers();
+      saveRooms(); renderConsoleRooms(); renderRooms(); refreshMapMarkers();
       toast("Room saved");
     }
     if (btn.dataset.act === "del") {
       if (!confirm("Delete this room?")) return;
       rooms = rooms.filter(function (x) { return x.id !== id; });
-      saveRooms();
-      renderConsoleRooms(); renderRooms(); refreshMapMarkers();
+      saveRooms(); renderConsoleRooms(); renderRooms(); refreshMapMarkers();
       toast("Deleted");
     }
   });
@@ -2592,49 +2405,29 @@ button{cursor:pointer}
     var r = rooms.find(function (x) { return x.id === pendingPhotoTarget; });
     pendingPhotoTarget = null;
     if (!r) return;
-
     var allFiles = Array.from(photoInput.files || []);
     photoInput.value = "";
-
     var slots = MAX_PHOTOS - r.photos.length;
-    var validFiles = allFiles
-      .filter(function (f) { return f && f.type && f.type.indexOf("image/") === 0; })
-      .slice(0, Math.max(0, slots));
-
-    if (!validFiles.length) {
-      if (allFiles.length && slots <= 0) toast("Photo limit reached — max " + MAX_PHOTOS + " per room");
-      return;
-    }
-
+    var validFiles = allFiles.filter(function (f) { return f && f.type && f.type.indexOf("image/") === 0; }).slice(0, Math.max(0, slots));
+    if (!validFiles.length) { if (allFiles.length && slots <= 0) toast("Photo limit reached — max " + MAX_PHOTOS + " per room"); return; }
     toast("Uploading " + validFiles.length + " photo" + (validFiles.length > 1 ? "s" : "") + "…");
-
     try {
       var results = await Promise.allSettled(validFiles.map(compressImage));
       var added = 0;
       results.forEach(function (res) {
-        if (res.status === "fulfilled" && typeof res.value === "string") {
-          if (r.photos.length < MAX_PHOTOS) {
-            r.photos.push(res.value);
-            added++;
-          }
-        }
+        if (res.status === "fulfilled" && typeof res.value === "string" && r.photos.length < MAX_PHOTOS) { r.photos.push(res.value); added++; }
       });
-      saveRooms();
-      renderConsoleRooms();
-      renderRooms();
-      refreshMapMarkers();
+      saveRooms(); renderConsoleRooms(); renderRooms(); refreshMapMarkers();
       if (added > 0) toast(added + " photo" + (added > 1 ? "s" : "") + " added");
       else toast("Could not add photos");
     } catch (_) { toast("Could not add photos"); }
   });
 
   on($("add-btn"), "click", function () {
-    var nameEl = $("new-name");
-    if (!nameEl) return;
+    var nameEl = $("new-name"); if (!nameEl) return;
     var name = nameEl.value.trim();
     if (!name) { var e1 = $("add-error"); if (e1) e1.textContent = "Name required"; return; }
-    var dailyEl = $("new-daily");
-    var daily = Math.max(0, Number(dailyEl ? dailyEl.value : 0) || 0);
+    var dailyEl = $("new-daily"); var daily = Math.max(0, Number(dailyEl ? dailyEl.value : 0) || 0);
     if (!daily) { var e2 = $("add-error"); if (e2) e2.textContent = "Enter daily rate"; return; }
     rooms.push(normalizeRoom({
       id: nextRoomId(), name: name,
@@ -2652,14 +2445,12 @@ button{cursor:pointer}
     }));
     saveRooms();
     var ae = $("add-error"); if (ae) ae.textContent = "";
-    ["new-emoji","new-name","new-daily","new-weekly","new-monthly","new-maxguests","new-beds","new-address","new-desc"].forEach(function (id) {
-      var el = $(id); if (el) el.value = "";
-    });
+    ["new-emoji","new-name","new-daily","new-weekly","new-monthly","new-maxguests","new-beds","new-address","new-desc"].forEach(function (id) { var el = $(id); if (el) el.value = ""; });
     renderConsoleRooms(); renderRooms();
     toast("Room added");
   });
 
-  /* ---------- Bookings tab ---------- */
+  /* ---------- Console bookings ---------- */
   var consoleBookings = $("console-bookings");
   function renderConsoleBookings() {
     if (!consoleBookings) return;
@@ -2671,16 +2462,8 @@ button{cursor:pointer}
       if (!b.acknowledged) row.style.borderLeft = "4px solid var(--danger)";
       row.innerHTML =
         '<div class="item-main">' +
-          '<div class="item-title">🧾 ' + escapeHTML(b.id) +
-            (!b.acknowledged ? '<span class="tag red">New</span>' : '<span class="tag green">Done</span>') +
-            '<span class="tag">' + escapeHTML(b.network) + '</span>' +
-          '</div>' +
-          '<div class="item-sub">' +
-            escapeHTML(b.roomName) + ' · ' + b.nights + 'n · ' + b.guests + 'g<br>' +
-            humanDate(b.checkIn) + ' → ' + humanDate(b.checkOut) + '<br>' +
-            escapeHTML(b.guestName || "—") + ' · ' + escapeHTML(b.guestPhone || "—") + '<br>' +
-            money(b.calc.total) + ' · ' + shortTimestamp(new Date(b.ts)) +
-          '</div>' +
+          '<div class="item-title">🧾 ' + escapeHTML(b.id) + (!b.acknowledged ? '<span class="tag red">New</span>' : '<span class="tag green">Done</span>') + '<span class="tag">' + escapeHTML(b.network) + '</span></div>' +
+          '<div class="item-sub">' + escapeHTML(b.roomName) + ' · ' + b.nights + 'n · ' + b.guests + 'g<br>' + humanDate(b.checkIn) + ' → ' + humanDate(b.checkOut) + '<br>' + escapeHTML(b.guestName || "—") + ' · ' + escapeHTML(b.guestPhone || "—") + '<br>' + money(b.calc.total) + ' · ' + shortTimestamp(new Date(b.ts)) + '</div>' +
         '</div>' +
         '<div class="item-actions">' +
           '<button class="btn btn--wa btn--sm" type="button" data-receipt="' + escapeAttr(b.id) + '">📱</button>' +
@@ -2693,32 +2476,16 @@ button{cursor:pointer}
   }
   on(consoleBookings, "click", function (e) {
     var rBtn = e.target.closest("[data-receipt]");
-    if (rBtn) {
-      var b = bookings.find(function (x) { return x.id === rBtn.dataset.receipt; });
-      if (b) openWhatsApp(b.guestPhone, buildBookingText(b, { network: b.network, ref: b.ref }));
-      return;
-    }
+    if (rBtn) { var b = bookings.find(function (x) { return x.id === rBtn.dataset.receipt; }); if (b) openWhatsApp(b.guestPhone, buildBookingText(b, { network: b.network, ref: b.ref })); return; }
     var aBtn = e.target.closest("[data-alert]");
-    if (aBtn) {
-      var b2 = bookings.find(function (x) { return x.id === aBtn.dataset.alert; });
-      if (b2) openWhatsApp(settings.shopWhatsApp, buildConciergeAlert(b2));
-      return;
-    }
+    if (aBtn) { var b2 = bookings.find(function (x) { return x.id === aBtn.dataset.alert; }); if (b2) openWhatsApp(settings.shopWhatsApp, buildConciergeAlert(b2)); return; }
     var akBtn = e.target.closest("[data-ack]");
-    if (akBtn) {
-      var b3 = bookings.find(function (x) { return x.id === akBtn.dataset.ack; });
-      if (b3) { b3.acknowledged = true; saveBookings(); renderConsoleBookings(); updateAlertBadge(); }
-      return;
-    }
+    if (akBtn) { var b3 = bookings.find(function (x) { return x.id === akBtn.dataset.ack; }); if (b3) { b3.acknowledged = true; saveBookings(); renderConsoleBookings(); updateAlertBadge(); } return; }
     var dBtn = e.target.closest("[data-delbooking]");
-    if (dBtn) {
-      if (!confirm("Delete booking?")) return;
-      bookings = bookings.filter(function (b) { return b.id !== dBtn.dataset.delbooking; });
-      saveBookings(); renderConsoleBookings(); updateAlertBadge();
-    }
+    if (dBtn) { if (!confirm("Delete booking?")) return; bookings = bookings.filter(function (b) { return b.id !== dBtn.dataset.delbooking; }); saveBookings(); renderConsoleBookings(); updateAlertBadge(); }
   });
 
-  /* ---------- Guests tab ---------- */
+  /* ---------- Console guests ---------- */
   var consoleGuests = $("console-guests");
   function renderConsoleGuests() {
     if (!consoleGuests) return;
@@ -2729,13 +2496,8 @@ button{cursor:pointer}
       row.className = "item-row";
       row.innerHTML =
         '<div class="item-main">' +
-          '<div class="item-title">📱 ' + escapeHTML(g.phone) +
-            (g.bookingCount > 1 ? ' <span class="tag">' + g.bookingCount + ' stays</span>' : "") +
-          '</div>' +
-          '<div class="item-sub">' +
-            (g.name ? escapeHTML(g.name) + " · " : "") +
-            (g.lastBookingAt ? "Last " + shortTimestamp(new Date(g.lastBookingAt)) : "Saved " + shortTimestamp(new Date(g.savedAt))) +
-          '</div>' +
+          '<div class="item-title">📱 ' + escapeHTML(g.phone) + (g.bookingCount > 1 ? ' <span class="tag">' + g.bookingCount + ' stays</span>' : "") + '</div>' +
+          '<div class="item-sub">' + (g.name ? escapeHTML(g.name) + " · " : "") + (g.lastBookingAt ? "Last " + shortTimestamp(new Date(g.lastBookingAt)) : "Saved " + shortTimestamp(new Date(g.savedAt))) + '</div>' +
         '</div>' +
         '<div class="item-actions">' +
           '<button class="btn btn--wa btn--sm" type="button" data-msg-guest="' + escapeAttr(g.phone) + '">💬</button>' +
@@ -2748,31 +2510,21 @@ button{cursor:pointer}
     var msgBtn = e.target.closest("[data-msg-guest]");
     if (msgBtn) { openWhatsApp(msgBtn.dataset.msgGuest, "Hi! This is " + settings.businessName + "."); return; }
     var dBtn = e.target.closest("[data-del-guest]");
-    if (dBtn) {
-      if (!confirm("Remove guest?")) return;
-      guests = guests.filter(function (g) { return g.phone !== dBtn.dataset.delGuest; });
-      saveGuests(); renderConsoleGuests();
-    }
+    if (dBtn) { if (!confirm("Remove guest?")) return; guests = guests.filter(function (g) { return g.phone !== dBtn.dataset.delGuest; }); saveGuests(); renderConsoleGuests(); }
   });
 
-  /* ---------- Promos tab ---------- */
+  /* ---------- Console promos ---------- */
   var consolePromos = $("console-promos");
   function renderConsolePromos() {
     if (!consolePromos) return;
     consolePromos.innerHTML = "";
-    if (!settings.promos || !settings.promos.length) {
-      consolePromos.innerHTML = '<div class="list-empty">No promotions</div>';
-      return;
-    }
+    if (!settings.promos || !settings.promos.length) { consolePromos.innerHTML = '<div class="list-empty">No promotions</div>'; return; }
     settings.promos.forEach(function (p) {
       var row = document.createElement("div");
       row.className = "item-row promo-row";
       row.innerHTML =
         '<div class="item-main">' +
-          '<div class="item-title">📣 ' + escapeHTML(p.title) +
-            (p.active ? '<span class="tag green">Active</span>' : '<span class="tag">Paused</span>') +
-            (p.discount > 0 ? '<span class="tag gold">' + p.discount + '%</span>' : "") +
-          '</div>' +
+          '<div class="item-title">📣 ' + escapeHTML(p.title) + (p.active ? '<span class="tag green">Active</span>' : '<span class="tag">Paused</span>') + (p.discount > 0 ? '<span class="tag gold">' + p.discount + '%</span>' : "") + '</div>' +
           '<div class="item-sub">' + escapeHTML(p.message) + '</div>' +
         '</div>' +
         '<div class="item-actions">' +
@@ -2797,17 +2549,9 @@ button{cursor:pointer}
       return;
     }
     var tBtn = e.target.closest("[data-toggle-promo]");
-    if (tBtn) {
-      var p2 = settings.promos.find(function (x) { return x.id === Number(tBtn.dataset.togglePromo); });
-      if (p2) { p2.active = !p2.active; saveSettings(); renderConsolePromos(); renderPromoBanner(); renderRooms(); }
-      return;
-    }
+    if (tBtn) { var p2 = settings.promos.find(function (x) { return x.id === Number(tBtn.dataset.togglePromo); }); if (p2) { p2.active = !p2.active; saveSettings(); renderConsolePromos(); renderPromoBanner(); renderRooms(); } return; }
     var dBtn = e.target.closest("[data-del-promo]");
-    if (dBtn) {
-      if (!confirm("Delete?")) return;
-      settings.promos = settings.promos.filter(function (p) { return p.id !== Number(dBtn.dataset.delPromo); });
-      saveSettings(); renderConsolePromos(); renderPromoBanner(); renderRooms();
-    }
+    if (dBtn) { if (!confirm("Delete?")) return; settings.promos = settings.promos.filter(function (p) { return p.id !== Number(dBtn.dataset.delPromo); }); saveSettings(); renderConsolePromos(); renderPromoBanner(); renderRooms(); }
   });
   on($("add-promo"), "click", function () {
     var titleEl = $("new-promo-title"), msgEl = $("new-promo-msg"), discEl = $("new-promo-discount");
@@ -2825,44 +2569,24 @@ button{cursor:pointer}
   });
 
   /* ============================================================
-     Map — hidden by default, revealed only on demand
+     Map
      ============================================================ */
-  var map = null;
-  var roomMarkers = {};
-  var officeMarker = null;
-  var userMarker = null;
-  var routeLine = null;
-  var mapInit = false;
-  var mapVisible = false;
+  var map = null, roomMarkers = {}, officeMarker = null, userMarker = null, routeLine = null, mapInit = false, mapVisible = false;
 
   function initMap() {
-    if (mapInit) return;
-    if (typeof L === "undefined") return;
-    var mapEl = $("map");
-    if (!mapEl) return;
+    if (mapInit || typeof L === "undefined") return;
+    var mapEl = $("map"); if (!mapEl) return;
     mapInit = true;
     try {
       var center = [settings.shopLat, settings.shopLng];
       map = L.map("map", { zoomControl: true }).setView(center, 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19, attribution: "&copy; OpenStreetMap"
-      }).addTo(map);
-
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(map);
       officeMarker = L.marker(center, {
-        icon: L.divIcon({
-          className: "office-marker",
-          html: '<div style="font-size:1.5rem" aria-hidden="true">🏨</div>',
-          iconSize: [30, 30], iconAnchor: [15, 30]
-        })
+        icon: L.divIcon({ className: "office-marker", html: '<div style="font-size:1.5rem" aria-hidden="true">🏨</div>', iconSize: [30, 30], iconAnchor: [15, 30] })
       }).addTo(map).bindPopup("<b>" + escapeHTML(settings.businessName) + "</b>");
-
       refreshMapMarkers();
-    } catch (err) {
-      console.warn("[map init]", err);
-      mapInit = false;
-    }
+    } catch (err) { try { console.warn("[map init]", err); } catch (_) {}; mapInit = false; }
   }
-
   function refreshMapMarkers() {
     if (!map) return;
     try {
@@ -2871,69 +2595,38 @@ button{cursor:pointer}
       rooms.forEach(function (r) {
         if (!r.lat || !r.lng) return;
         var m = L.marker([r.lat, r.lng], {
-          icon: L.divIcon({
-            className: "prop-marker",
-            html: '<div style="font-size:1.1rem;background:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid #d4af37">' + escapeHTML(r.emoji || "🏨") + '</div>',
-            iconSize: [32, 32], iconAnchor: [16, 16]
-          })
+          icon: L.divIcon({ className: "prop-marker", html: '<div style="font-size:1.1rem;background:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);border:2px solid #d4af37">' + escapeHTML(r.emoji || "🏨") + '</div>', iconSize: [32, 32], iconAnchor: [16, 16] })
         }).addTo(map);
-        m.bindPopup(
-          "<b>" + escapeHTML(r.name) + "</b><br>" +
-          money(r.dailyRate) + "/night<br>" +
-          '<button onclick="window.__gl_book(' + r.id + ')" style="margin-top:6px;padding:4px 10px;font-size:.76rem;font-weight:700;background:#d4af37;color:#1a1a1a;border:none;border-radius:6px;cursor:pointer">Book</button>'
-        );
+        m.bindPopup("<b>" + escapeHTML(r.name) + "</b><br>" + money(r.dailyRate) + "/night<br>" + '<button onclick="window.__gl_book(' + r.id + ')" style="margin-top:6px;padding:4px 10px;font-size:.76rem;font-weight:700;background:#d4af37;color:#1a1a1a;border:none;border-radius:6px;cursor:pointer">Book</button>');
         roomMarkers[r.id] = m;
       });
       if (officeMarker) officeMarker.setLatLng([settings.shopLat, settings.shopLng]);
     } catch (_) {}
-    updateGmapsLink();
-    updateMapAddress();
+    updateGmapsLink(); updateMapAddress();
   }
+  window.__gl_book = function (id) { try { var r = rooms.find(function (x) { return x.id === id; }); if (r) openBooking(r); } catch (_) {} };
+  function updateGmapsLink() { var a = $("gmaps-link"); if (a) a.href = "https://www.google.com/maps/dir/?api=1&destination=" + settings.shopLat + "," + settings.shopLng; }
+  function updateMapAddress() { var t = $("map-title"); if (t) t.textContent = settings.businessName; var a = $("map-address"); if (a) a.textContent = settings.shopAddress; }
 
-  window.__gl_book = function (id) {
-    try {
-      var r = rooms.find(function (x) { return x.id === id; });
-      if (r) openBooking(r);
-    } catch (_) {}
-  };
-
-  function updateGmapsLink() {
-    var a = $("gmaps-link");
-    if (a) a.href = "https://www.google.com/maps/dir/?api=1&destination=" + settings.shopLat + "," + settings.shopLng;
-  }
-  function updateMapAddress() {
-    var t = $("map-title"); if (t) t.textContent = settings.businessName;
-    var a = $("map-address"); if (a) a.textContent = settings.shopAddress;
-  }
-
-  /* Map toggle */
   on($("map-toggle-btn"), "click", function () {
     if (!settings.showMap) return;
-    var panel = $("map-panel");
-    var btn = $("map-toggle-btn");
+    var panel = $("map-panel"), btn = $("map-toggle-btn");
     if (!panel || !btn) return;
-
     mapVisible = !mapVisible;
     if (mapVisible) {
-      panel.hidden = false;
-      btn.setAttribute("aria-expanded", "true");
-      btn.textContent = "✕ Hide map";
-      // Init on first reveal, then resize
+      panel.hidden = false; btn.setAttribute("aria-expanded", "true"); btn.textContent = "✕ Hide map";
       requestAnimationFrame(function () {
         if (!mapInit) initMap();
         setTimeout(function () { if (map) try { map.invalidateSize(); } catch (_) {} }, 40);
         setTimeout(function () { if (map) try { map.invalidateSize(); } catch (_) {} }, 260);
       });
     } else {
-      panel.hidden = true;
-      btn.setAttribute("aria-expanded", "false");
-      btn.textContent = "📍 Show map & directions";
+      panel.hidden = true; btn.setAttribute("aria-expanded", "false"); btn.textContent = "📍 Show map & directions";
     }
   });
 
   function syncMapSectionVisibility() {
-    var section = $("map-section");
-    if (!section) return;
+    var section = $("map-section"); if (!section) return;
     section.hidden = !settings.showMap;
     if (!settings.showMap) {
       var panel = $("map-panel"), btn = $("map-toggle-btn");
@@ -2952,8 +2645,7 @@ button{cursor:pointer}
   async function fetchRoute(from, to) {
     try {
       var url = "https://router.project-osrm.org/route/v1/driving/" + from[1] + "," + from[0] + ";" + to[1] + "," + to[0] + "?overview=full&geometries=geojson";
-      var res = await fetch(url);
-      if (!res.ok) throw new Error();
+      var res = await fetch(url); if (!res.ok) throw new Error();
       var data = await res.json();
       if (data.code !== "Ok" || !data.routes || !data.routes.length) throw new Error();
       return Object.assign({}, data.routes[0], { isFallback: false });
@@ -2966,8 +2658,7 @@ button{cursor:pointer}
   on($("locate-btn"), "click", function () {
     var btn = $("locate-btn"), info = $("route-info");
     if (!navigator.geolocation) { if (info) { info.className = "error"; info.textContent = "Geolocation not supported"; } return; }
-    if (!mapInit) initMap();
-    if (!map) return;
+    if (!mapInit) initMap(); if (!map) return;
     if (btn) { btn.disabled = true; btn.textContent = "📡 Locating…"; }
     if (info) { info.className = "loading"; info.textContent = "Requesting location…"; }
     navigator.geolocation.getCurrentPosition(async function (pos) {
@@ -2993,7 +2684,7 @@ button{cursor:pointer}
   });
 
   /* ============================================================
-     Render all
+     Render all + init
      ============================================================ */
   function renderAll() {
     syncTabVisibility();
@@ -3003,20 +2694,16 @@ button{cursor:pointer}
     updateAlertBadge();
     updateMapAddress();
     syncMapSectionVisibility();
+    applyMainBackground();
   }
 
-  /* ============================================================
-     Init
-     ============================================================ */
   buildCurrencySelect();
   renderAll();
   detectCurrency();
   updateAlertBadge();
 
   var initial = (location.hash || "").replace("#", "");
-  if (initial !== "concierge" && initial !== "rooms") {
-    initial = settings.defaultPage || "rooms";
-  }
+  if (initial !== "concierge" && initial !== "rooms") initial = settings.defaultPage || "rooms";
   if (initial === "concierge" && !settings.showConciergePage) initial = "rooms";
   showPage(initial);
 
